@@ -1,33 +1,37 @@
 import * as PIXI from "pixi.js-legacy";
 import { describe, expect, it, vi } from "vitest";
-import { createPixiApp, populateScene } from "../../pixi/scene";
+import { createExampleScene, createPixiApp, populateScene } from "../../pixi/scene";
 
 vi.mock("pixi.js-legacy", () => ({
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	Application: vi.fn().mockImplementation(function (this: any) {
 		this.view = document.createElement("canvas");
 		this.stage = { addChild: vi.fn() };
 	}),
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	Container: vi.fn().mockImplementation(function (this: any) {
 		this.removeChildren = vi.fn();
 		this.addChild = vi.fn();
 		this.children = [];
+		this.position = { set: vi.fn() };
 	}),
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	Graphics: vi.fn().mockImplementation(function (this: any) {
 		this.lineStyle = vi.fn().mockReturnThis();
 		this.beginFill = vi.fn().mockReturnThis();
 		this.endFill = vi.fn().mockReturnThis();
 		this.drawRect = vi.fn().mockReturnThis();
 		this.drawCircle = vi.fn().mockReturnThis();
+		this.drawEllipse = vi.fn().mockReturnThis();
 		this.moveTo = vi.fn().mockReturnThis();
 		this.lineTo = vi.fn().mockReturnThis();
 		this.closePath = vi.fn().mockReturnThis();
+		this.on = vi.fn().mockReturnThis();
 		this.x = 0;
 		this.y = 0;
 		this.rotation = 0;
+		this.angle = 0;
 		this.scale = { set: vi.fn() };
+		this.position = { set: vi.fn() };
+		this.interactive = false;
+		this.cursor = "";
 	}),
 }));
 
@@ -69,7 +73,6 @@ describe("createPixiApp", () => {
 });
 
 describe("populateScene", () => {
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	const makeContainer = () =>
 		({
 			removeChildren: vi.fn(),
@@ -99,5 +102,59 @@ describe("populateScene", () => {
 		addedArgs.forEach((shape) => {
 			expect(MockGraphics.mock.results.map((r) => r.value)).toContain(shape);
 		});
+	});
+
+	it("каждая фигура имеет interactive=true", () => {
+		const container = makeContainer();
+		populateScene(container);
+		const MockGraphics = vi.mocked(PIXI.Graphics);
+		const shapes = MockGraphics.mock.results.map((r) => r.value);
+		shapes.forEach((shape) => {
+			expect(shape.interactive).toBe(true);
+		});
+	});
+});
+
+describe("createExampleScene", () => {
+	const makeContainer = () =>
+		({
+			removeChildren: vi.fn(),
+			addChild: vi.fn(),
+			children: [],
+		}) as unknown as PIXI.Container;
+
+	it("очищает контейнер перед заполнением", () => {
+		const container = makeContainer();
+		createExampleScene(container);
+		expect(vi.mocked(container.removeChildren)).toHaveBeenCalledOnce();
+	});
+
+	it("добавляет subContainer, g1 и g2 в контейнер (3 потомка)", () => {
+		const container = makeContainer();
+		createExampleScene(container);
+		// addChild вызывается один раз с тремя аргументами: subContainer, g1, g2
+		expect(vi.mocked(container.addChild)).toHaveBeenCalledOnce();
+		const args = vi.mocked(container.addChild).mock.calls[0];
+		expect(args).toHaveLength(3);
+	});
+
+	it("g1 и g2 имеют interactive=true", () => {
+		const container = makeContainer();
+		createExampleScene(container);
+		const MockGraphics = vi.mocked(PIXI.Graphics);
+		const shapes = MockGraphics.mock.results.map((r) => r.value);
+		// g1 и g2 — первые два Graphics с interactive
+		const interactive = shapes.filter((s) => s.interactive);
+		expect(interactive.length).toBeGreaterThanOrEqual(2);
+	});
+
+	it("g1 подписывается на pointerdown, g2 — на pointerup", () => {
+		const container = makeContainer();
+		createExampleScene(container);
+		const MockGraphics = vi.mocked(PIXI.Graphics);
+		const shapes = MockGraphics.mock.results.map((r) => r.value);
+		const events = shapes.flatMap((s) => s.on.mock.calls.map(([ev]: [string]) => ev));
+		expect(events).toContain("pointerdown");
+		expect(events).toContain("pointerup");
 	});
 });

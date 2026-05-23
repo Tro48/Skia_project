@@ -1,3 +1,4 @@
+import * as PIXI from "pixi.js-legacy";
 import type { AttachPointerEventsParams, SetupEventsParams } from "./types";
 
 export function attachPointerEvents({ canvas, onDown, onUp }: AttachPointerEventsParams): void {
@@ -12,25 +13,56 @@ export function attachPointerEvents({ canvas, onDown, onUp }: AttachPointerEvent
 	});
 }
 
-export function setupEvents({ pixiCanvas, skiaCanvas, onInteract }: SetupEventsParams): void {
-	const status = document.getElementById("status");
-
-	const log = (src: string, type: string, x: number, y: number) => {
-		if (status) {
-			status.textContent = `${src} ${type}: (${Math.round(x)}, ${Math.round(y)})`;
-		}
-		onInteract?.();
-	};
-
+export function setupEvents({ pixiCanvas, skiaCanvas, container, onInteract }: SetupEventsParams): void {
+	// На Pixi-canvas событие пробрасывается через встроенный Interaction Manager,
+	// который уже знает об interactive-объектах — дополнительного hit-testing не нужно.
 	attachPointerEvents({
 		canvas: pixiCanvas,
-		onDown: (x, y) => log("Pixi", "pointerDown", x, y),
-		onUp: (x, y) => log("Pixi", "pointerUp", x, y),
+		onDown: () => onInteract?.(),
+		onUp: () => onInteract?.(),
 	});
 
+	// На Skia-canvas нет встроенного менеджера событий — делаем hit-test вручную.
 	attachPointerEvents({
 		canvas: skiaCanvas,
-		onDown: (x, y) => log("Skia", "pointerDown", x, y),
-		onUp: (x, y) => log("Skia", "pointerUp", x, y),
+		onDown: (x, y) => {
+			if (container) {
+				const hit = hitTest(container, x, y);
+				if (hit) hit.emit("pointerdown", { x, y });
+			}
+			onInteract?.();
+		},
+		onUp: (x, y) => {
+			if (container) {
+				const hit = hitTest(container, x, y);
+				if (hit) hit.emit("pointerup", { x, y });
+			}
+			onInteract?.();
+		},
 	});
+}
+
+/**
+ * Обходит дерево контейнера в обратном z-порядке и возвращает первый объект,
+ * чей world-space AABB содержит точку (x, y).
+ */
+export function hitTest(container: PIXI.Container, x: number, y: number): PIXI.DisplayObject | null {
+	const children = container.children;
+
+	for (let i = children.length - 1; i >= 0; i--) {
+		const child = children[i];
+
+		if (!child.visible || child.worldAlpha <= 0) continue;
+
+		if (child instanceof PIXI.Container) {
+			const found = hitTest(child, x, y);
+			if (found) return found;
+		}
+
+		// getBounds() возвращает AABB в мировых координатах
+		const bounds = child.getBounds();
+		if (bounds.contains(x, y)) return child;
+	}
+
+	return null;
 }

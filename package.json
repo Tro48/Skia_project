@@ -27,6 +27,7 @@
   "homepage": "https://github.com/Tro48/Skia_project#readme",
   "dependencies": {
     "canvaskit-wasm": "^0.41.1",
+    "jspdf": "^4.2.1",
     "pixi.js-legacy": "^7.2.4"
   },
   "devDependencies": {

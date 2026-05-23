@@ -1,5 +1,6 @@
 import { setupEvents } from "./events.utils";
-import { createPixiApp, populateScene } from "./pixi/scene";
+import { exportToPdf } from "./pdf/exporter";
+import { createExampleScene, createPixiApp, populateScene } from "./pixi/scene";
 import { initCanvasKit } from "./skia/init";
 import { renderContainerToSkia } from "./skia/renderer";
 import type { RenderSkiaParams } from "./types";
@@ -19,31 +20,52 @@ async function main(): Promise<void> {
 
 	const skiaCanvasEl = document.getElementById("skia-canvas") as HTMLCanvasElement;
 
-	const surface = ck.MakeWebGLCanvasSurface(skiaCanvasEl) ?? ck.MakeSWCanvasSurface(skiaCanvasEl); // fallback на CPU-рендеринг
+	const surface = ck.MakeWebGLCanvasSurface(skiaCanvasEl) ?? ck.MakeSWCanvasSurface(skiaCanvasEl);
 	if (!surface) {
 		status.textContent = "Ошибка создания Skia surface";
 		return;
 	}
+
 	renderSkia({ ck, surface, container });
 	setupEvents({
 		pixiCanvas,
 		skiaCanvas: skiaCanvasEl,
+		container,
 		onInteract: () => renderSkia({ ck, surface, container }),
 	});
 
 	status.textContent = "Канвас готов к работе";
 
-	document.getElementById("btn-random")!.addEventListener("click", () => {
-		populateScene(container);
-		renderSkia({ ck, surface, container });
+	const btnPdf = document.getElementById("btn-pdf") as HTMLButtonElement;
+
+	function showCanvases(): void {
 		document
 			.querySelectorAll<HTMLElement>(".canvas-placeholder")
 			.forEach((el) => el.classList.add("hidden"));
+		btnPdf.disabled = false;
+	}
+
+	document.getElementById("btn-example")!.addEventListener("click", () => {
+		createExampleScene(container);
+		renderSkia({ ck, surface, container });
+		showCanvases();
 		status.textContent = "Готово";
+	});
+
+	document.getElementById("btn-random")!.addEventListener("click", () => {
+		populateScene(container);
+		renderSkia({ ck, surface, container });
+		showCanvases();
+		status.textContent = "Готово";
+	});
+
+	document.getElementById("btn-pdf")!.addEventListener("click", () => {
+		status.textContent = "Генерация PDF…";
+		exportToPdf({ container, width: WIDTH, height: HEIGHT });
+		status.textContent = "PDF скачан";
 	});
 }
 
-// Функция синхронного обновления Skia-canvas
 function renderSkia({ ck, surface, container }: RenderSkiaParams): void {
 	const skCanvas = surface.getCanvas();
 	skCanvas.clear(ck.TRANSPARENT);

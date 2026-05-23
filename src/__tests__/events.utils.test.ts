@@ -1,5 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { attachPointerEvents, setupEvents } from "../events.utils";
+import { attachPointerEvents, hitTest, setupEvents } from "../events.utils";
+
+// events.utils импортирует PIXI для instanceof-проверок в hitTest
+vi.mock("pixi.js-legacy", () => {
+	class Container {
+		visible = true;
+		worldAlpha = 1;
+		children: unknown[] = [];
+	}
+	return { Container };
+});
 
 function makeCanvas(rectOffset = { left: 0, top: 0 }) {
 	const canvas = document.createElement("canvas");
@@ -98,80 +108,7 @@ describe("attachPointerEvents — pointerup", () => {
 
 // ---- setupEvents ----
 
-describe("setupEvents — #status обновление", () => {
-	let statusEl: HTMLElement;
-
-	beforeEach(() => {
-		statusEl = document.createElement("div");
-		statusEl.id = "status";
-		document.body.appendChild(statusEl);
-	});
-
-	afterEach(() => {
-		statusEl.remove();
-	});
-
-	it("поставляет 'Pixi pointerDown' при pointerdown на pixi-canvas", () => {
-		const pixiCanvas = makeCanvas();
-		setupEvents({ pixiCanvas, skiaCanvas: makeCanvas() });
-
-		pixiCanvas.dispatchEvent(new PointerEvent("pointerdown", { clientX: 10, clientY: 20 }));
-
-		expect(statusEl.textContent).toBe("Pixi pointerDown: (10, 20)");
-	});
-
-	it("поставляет 'Pixi pointerUp' при pointerup на pixi-canvas", () => {
-		const pixiCanvas = makeCanvas();
-		setupEvents({ pixiCanvas, skiaCanvas: makeCanvas() });
-
-		pixiCanvas.dispatchEvent(new PointerEvent("pointerup", { clientX: 15, clientY: 25 }));
-
-		expect(statusEl.textContent).toBe("Pixi pointerUp: (15, 25)");
-	});
-
-	it("поставляет 'Skia pointerDown' при pointerdown на skia-canvas", () => {
-		const skiaCanvas = makeCanvas();
-		setupEvents({ pixiCanvas: makeCanvas(), skiaCanvas });
-
-		skiaCanvas.dispatchEvent(new PointerEvent("pointerdown", { clientX: 5, clientY: 10 }));
-
-		expect(statusEl.textContent).toBe("Skia pointerDown: (5, 10)");
-	});
-
-	it("поставляет 'Skia pointerUp' при pointerup на skia-canvas", () => {
-		const skiaCanvas = makeCanvas();
-		setupEvents({ pixiCanvas: makeCanvas(), skiaCanvas });
-
-		skiaCanvas.dispatchEvent(new PointerEvent("pointerup", { clientX: 30, clientY: 40 }));
-
-		expect(statusEl.textContent).toBe("Skia pointerUp: (30, 40)");
-	});
-
-	it("округляет координаты в тексте статуса", () => {
-		// canvas смещён на дробное значение — координаты будут дробными
-		const pixiCanvas = makeCanvas({ left: 0.3, top: 0.7 });
-		setupEvents({ pixiCanvas, skiaCanvas: makeCanvas() });
-
-		pixiCanvas.dispatchEvent(new PointerEvent("pointerdown", { clientX: 10, clientY: 20 }));
-
-		// Math.round(10 - 0.3) = 10, Math.round(20 - 0.7) = 19
-		expect(statusEl.textContent).toBe("Pixi pointerDown: (10, 19)");
-	});
-});
-
 describe("setupEvents — onInteract", () => {
-	let statusEl: HTMLElement;
-
-	beforeEach(() => {
-		statusEl = document.createElement("div");
-		statusEl.id = "status";
-		document.body.appendChild(statusEl);
-	});
-
-	afterEach(() => {
-		statusEl.remove();
-	});
-
 	it("вызывает onInteract при pointerdown на pixi-canvas", () => {
 		const pixiCanvas = makeCanvas();
 		const onInteract = vi.fn();
@@ -216,13 +153,75 @@ describe("setupEvents — onInteract", () => {
 	});
 });
 
-describe("setupEvents — без #status в DOM", () => {
-	it("не выбрасывает исключение если #status отсутствует", () => {
+describe("setupEvents — не пишет в #status", () => {
+	it("не изменяет #status при pointer-событиях", () => {
+		const statusEl = document.createElement("div");
+		statusEl.id = "status";
+		statusEl.textContent = "Готово";
+		document.body.appendChild(statusEl);
+
 		const pixiCanvas = makeCanvas();
 		setupEvents({ pixiCanvas, skiaCanvas: makeCanvas() });
+		pixiCanvas.dispatchEvent(new PointerEvent("pointerdown", { clientX: 10, clientY: 20 }));
+		pixiCanvas.dispatchEvent(new PointerEvent("pointerup", { clientX: 10, clientY: 20 }));
 
-		expect(() => {
-			pixiCanvas.dispatchEvent(new PointerEvent("pointerdown", { clientX: 1, clientY: 2 }));
-		}).not.toThrow();
+		expect(statusEl.textContent).toBe("Готово");
+		statusEl.remove();
+	});
+});
+
+// ---- hitTest ----
+
+function makeBounds(x: number, y: number, w: number, h: number) {
+	return { contains: (px: number, py: number) => px >= x && px <= x + w && py >= y && py <= y + h };
+}
+
+function makeObj(bounds: ReturnType<typeof makeBounds>, visible = true, worldAlpha = 1) {
+	return { visible, worldAlpha, getBounds: () => bounds, children: [] };
+}
+
+describe("hitTest", () => {
+	it("возвращает объект, чей bounds содержит точку", () => {
+		const obj = makeObj(makeBounds(10, 10, 100, 100));
+		const container = { children: [obj], visible: true, worldAlpha: 1 };
+		const result = hitTest(container as any, 50, 50);
+		expect(result).toBe(obj);
+	});
+
+	it("возвращает null если ни один объект не содержит точку", () => {
+		const obj = makeObj(makeBounds(10, 10, 50, 50));
+		const container = { children: [obj], visible: true, worldAlpha: 1 };
+		expect(hitTest(container as any, 200, 200)).toBeNull();
+	});
+
+	it("пропускает объекты с visible=false", () => {
+		const obj = makeObj(makeBounds(0, 0, 400, 300), false);
+		const container = { children: [obj], visible: true, worldAlpha: 1 };
+		expect(hitTest(container as any, 50, 50)).toBeNull();
+	});
+
+	it("пропускает объекты с worldAlpha=0", () => {
+		const obj = makeObj(makeBounds(0, 0, 400, 300), true, 0);
+		const container = { children: [obj], visible: true, worldAlpha: 1 };
+		expect(hitTest(container as any, 50, 50)).toBeNull();
+	});
+
+	it("возвращает верхний объект (последний в z-порядке) при перекрытии", () => {
+		const bottom = makeObj(makeBounds(0, 0, 200, 200));
+		const top = makeObj(makeBounds(0, 0, 200, 200));
+		const container = { children: [bottom, top], visible: true, worldAlpha: 1 };
+		expect(hitTest(container as any, 100, 100)).toBe(top);
+	});
+
+	it("эмитирует pointerdown на найденном объекте при клике на Skia canvas", () => {
+		const onDown = vi.fn();
+		const obj = { ...makeObj(makeBounds(0, 0, 400, 300)), emit: onDown };
+		const container = { children: [obj], visible: true, worldAlpha: 1 };
+		const skiaCanvas = makeCanvas();
+		setupEvents({ pixiCanvas: makeCanvas(), skiaCanvas, container: container as any });
+
+		skiaCanvas.dispatchEvent(new PointerEvent("pointerdown", { clientX: 50, clientY: 50 }));
+
+		expect(onDown).toHaveBeenCalledWith("pointerdown", expect.objectContaining({ x: 50, y: 50 }));
 	});
 });

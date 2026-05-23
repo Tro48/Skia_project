@@ -11,10 +11,10 @@ vi.mock("pixi.js-legacy", () => ({
 	Sprite: vi.fn(),
 }));
 
-// BG_COLOR из renderer.ts: { r: 0x16/255, g: 0x21/255, b: 0x3e/255, a: 1 }
-const BG_R = 0x16 / 255;
-const BG_G = 0x21 / 255;
-const BG_B = 0x3e / 255;
+// BG_COLOR из renderer.ts: { r: 0xf6/255, g: 0xf6/255, b: 0xf6/255, a: 1 } — светло-серый #f6f6f6
+const BG_R = 0xf6 / 255;
+const BG_G = 0xf6 / 255;
+const BG_B = 0xf6 / 255;
 
 function makePaint() {
 	return {
@@ -98,7 +98,7 @@ describe("renderContainerToSkia — фон", () => {
 		expect(ck.LTRBRect).toHaveBeenCalledWith(0, 0, 200, 150);
 	});
 
-	it("цвет фона r≈0x16/255, g≈0x21/255, b≈0x3e/255, a=1", () => {
+	it("цвет фона r≈0xf6/255, g≈0xf6/255, b≈0xf6/255, a=1 (#f6f6f6)", () => {
 		const ck = makeCk();
 		const canvas = makeCanvas();
 		renderContainerToSkia({

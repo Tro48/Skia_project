@@ -1,5 +1,6 @@
 import type { Canvas, CanvasKit, Surface } from "canvaskit-wasm";
 import type * as PIXI from "pixi.js-legacy";
+import type { Context2d } from "jspdf";
 
 export interface Scene {
 	app: PIXI.Application;
@@ -52,5 +53,17 @@ export type AttachPointerEventsParams = {
 export type SetupEventsParams = {
 	pixiCanvas: HTMLCanvasElement;
 	skiaCanvas: HTMLCanvasElement;
+	container?: PIXI.Container;
 	onInteract?: () => void;
+};
+
+export type ExportToPdfParams = {
+	container: PIXI.Container;
+	width: number;
+	height: number;
+};
+
+export type RenderDisplayObjectToCtxParams = {
+	ctx: Context2d;
+	obj: PIXI.DisplayObject;
 };
