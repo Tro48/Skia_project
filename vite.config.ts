@@ -3,6 +3,7 @@ import { defineConfig } from "vite";
 import wasm from "vite-plugin-wasm";
 
 export default defineConfig({
+  base: "/Skia_project/",
   plugins: [wasm()],
   optimizeDeps: {
     include: ["canvaskit-wasm"],

@@ -5,8 +5,7 @@ let _ck: CanvasKit | null = null;
 export async function initCanvasKit(): Promise<CanvasKit> {
 	if (_ck) return _ck; // синглтон — грузим WASM только один раз
 	_ck = await CanvasKitInit({
-		locateFile: (file: string) =>
-			new URL(`../../node_modules/canvaskit-wasm/bin/${file}`, import.meta.url).href,
+		locateFile: (file: string) => import.meta.env.BASE_URL + file,
 	}); // locateFile сообщает загрузчику, где лежит .wasm-файл
 	return _ck;
 }

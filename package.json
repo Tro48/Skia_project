@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "mkdir -p public && cp node_modules/canvaskit-wasm/bin/canvaskit.wasm public/",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest",
