@@ -2,8 +2,6 @@ import { setupEvents } from "./events.utils";
 import { createPixiApp, populateScene } from "./pixi/scene";
 import { initCanvasKit } from "./skia/init";
 import { renderContainerToSkia } from "./skia/renderer";
-import "./styles/main.css";
-import "./styles/reset.css";
 import type { RenderSkiaParams } from "./types";
 
 const WIDTH = 400;
@@ -26,7 +24,6 @@ async function main(): Promise<void> {
 		status.textContent = "Ошибка создания Skia surface";
 		return;
 	}
-	populateScene(container);
 	renderSkia({ ck, surface, container });
 	setupEvents({
 		pixiCanvas,
@@ -34,11 +31,16 @@ async function main(): Promise<void> {
 		onInteract: () => renderSkia({ ck, surface, container }),
 	});
 
+	status.textContent = "Канвас готов к работе";
+
 	document.getElementById("btn-random")!.addEventListener("click", () => {
 		populateScene(container);
-		renderSkia({ ck, surface, container }); // перерендериваем Skia после изменения сцены
+		renderSkia({ ck, surface, container });
+		document
+			.querySelectorAll<HTMLElement>(".canvas-placeholder")
+			.forEach((el) => el.classList.add("hidden"));
+		status.textContent = "Готово";
 	});
-	status.textContent = "Готово";
 }
 
 // Функция синхронного обновления Skia-canvas

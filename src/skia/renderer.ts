@@ -1,8 +1,7 @@
 import type { RenderContainerToSkiaParams } from "../types";
 import { renderDisplayObject } from "./renderer.utils";
 
-// Цвет фона сцены — совпадает с backgroundColor в Pixi
-const BG_COLOR = { r: 0x16 / 255, g: 0x21 / 255, b: 0x3e / 255, a: 1 };
+const BG_COLOR = { r: 0xf6 / 255, g: 0xf6 / 255, b: 0xf6 / 255, a: 1 };
 
 export function renderContainerToSkia({
 	ck,

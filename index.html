@@ -4,17 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pixi + Skia</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/styles/reset.css">
+    <link rel="stylesheet" href="/src/styles/main.css">
 </head>
 <body>
     <h1>Pixi + Skia / CanvasKit</h1>
     <div class="canvases">
         <div class="canvas-wrap">
             <p>Pixi.js (legacy canvas)</p>
-            <canvas id="pixi-canvas" width="400" height="300"></canvas>
+            <div class="canvas-frame">
+                <canvas id="pixi-canvas" width="400" height="300"></canvas>
+                <span class="canvas-placeholder">Для создания фигур<br>нажмите на кнопку</span>
+            </div>
         </div>
         <div class="canvas-wrap">
             <p>Skia (CanvasKit WASM)</p>
-            <canvas id="skia-canvas" width="400" height="300"></canvas>
+            <div class="canvas-frame">
+                <canvas id="skia-canvas" width="400" height="300"></canvas>
+                <span class="canvas-placeholder">Для создания фигур<br>нажмите на кнопку</span>
+            </div>
         </div>
     </div>
     <div class="controls">

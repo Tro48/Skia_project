@@ -5,7 +5,7 @@ export function createPixiApp(canvas: HTMLCanvasElement): Scene {
 	const app = new PIXI.Application({
 		width: canvas.width,
 		height: canvas.height,
-		backgroundColor: 0x16213e,
+		backgroundColor: 0xf6f6f6,
 		forceCanvas: true,
 		antialias: true,
 		view: canvas,
