@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { attachPointerEvents, hitTest, setupEvents } from "../events.utils";
 
 // events.utils импортирует PIXI для instanceof-проверок в hitTest
