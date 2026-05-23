@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixi + Skia</title>
+</head>
+<body>
+    <h1>Pixi + Skia / CanvasKit</h1>
+    <div class="canvases">
+        <div class="canvas-wrap">
+            <p>Pixi.js (legacy canvas)</p>
+            <div id="pixi-mount"></div>
+        </div>
+    </div>
+    <div class="canvas">
+        <h4 class="canvas-title">Skia (CanvasKit WASM)</h4>
+        <canvas id="skia-canvas" width="400" height="300"></canvas>
+    </div>
+    <div class="controls">
+        <button id="btn-random">Случайные фигуры</button>
+        <button id="btn-pdf">Экспорт в PDF</button>
+    </div>
+    <div id="status">Загрузка CanvasKit…</div>
+    <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

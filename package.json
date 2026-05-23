@@ -1,0 +1,46 @@
+{
+  "name": "skia_project",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "format": "prettier --write src",
+    "format:check": "prettier --check src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tro48/Skia_project.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Tro48/Skia_project/issues"
+  },
+  "homepage": "https://github.com/Tro48/Skia_project#readme",
+  "dependencies": {
+    "canvaskit-wasm": "^0.41.1",
+    "pixi.js-legacy": "^7.2.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^25.9.1",
+    "eslint": "^10.4.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "jsdom": "^29.1.1",
+    "prettier": "^3.8.3",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.59.4",
+    "vite": "^8.0.14",
+    "vite-plugin-wasm": "^3.6.0",
+    "vitest": "^4.1.7"
+  }
+}
