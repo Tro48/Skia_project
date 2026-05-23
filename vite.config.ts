@@ -5,7 +5,7 @@ import wasm from "vite-plugin-wasm";
 export default defineConfig({
   plugins: [wasm()],
   optimizeDeps: {
-    exclude: ["canvaskit-wasm"],
+    include: ["canvaskit-wasm"],
   },
   test: {
     environment: "jsdom",
