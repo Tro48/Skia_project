@@ -21,9 +21,11 @@ vi.mock("pixi.js-legacy", () => {
 		geometry = { graphicsData: [] as any[] };
 	}
 	class Sprite extends Container {
+		anchor = { x: 0, y: 0 };
 		texture = {
 			width: 4,
 			height: 4,
+			orig: { width: 4, height: 4 },
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			baseTexture: { resource: null as any },
 		};
@@ -370,6 +372,7 @@ describe("renderSprite", () => {
 		sprite.worldAlpha = worldAlpha;
 		sprite.texture.width = w;
 		sprite.texture.height = h;
+		sprite.texture.orig = { width: w, height: h };
 		const imgCanvas = document.createElement("canvas");
 		sprite.texture.baseTexture.resource = { source: imgCanvas };
 		return { canvas, ck, sprite };

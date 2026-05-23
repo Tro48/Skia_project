@@ -110,15 +110,18 @@ function buildPath({ ck, data }: BuildPathParams): Path | null {
 		for (let i = 2; i < pts.length; i += 2) {
 			builder.lineTo(pts[i], pts[i + 1]);
 		}
-		builder.close();
+		// closeStroke=false означает открытый путь (moveTo/lineTo без closePath) — не закрываем
+		if (shape.closeStroke !== false) {
+			builder.close();
+		}
 	} else if (shape instanceof PIXI.Ellipse) {
-		// PIXI.Ellipse хранит x/y как центр, width/height как полные размеры
+		// PIXI.Ellipse.width/height — полуоси (как drawEllipse(cx, cy, rx, ry))
 		builder.addOval(
 			ck.LTRBRect(
-				shape.x - shape.width / 2,
-				shape.y - shape.height / 2,
-				shape.x + shape.width / 2,
-				shape.y + shape.height / 2
+				shape.x - shape.width,
+				shape.y - shape.height,
+				shape.x + shape.width,
+				shape.y + shape.height
 			)
 		);
 	} else {
@@ -158,7 +161,9 @@ function renderSprite({ ck, canvas, obj }: RenderSpriteParams): void {
 
 	const paint = new ck.Paint();
 	paint.setAlphaf(obj.worldAlpha);
-	canvas.drawImage(skImage, 0, 0, paint);
+	const dx = -obj.anchor.x * obj.texture.orig.width;
+	const dy = -obj.anchor.y * obj.texture.orig.height;
+	canvas.drawImage(skImage, dx, dy, paint);
 
 	paint.delete();
 	skImage.delete();

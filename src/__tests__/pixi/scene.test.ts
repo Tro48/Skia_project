@@ -1,5 +1,5 @@
 import * as PIXI from "pixi.js-legacy";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createExampleScene, createPixiApp, populateScene } from "../../pixi/scene";
 
 vi.mock("pixi.js-legacy", () => ({
@@ -20,6 +20,7 @@ vi.mock("pixi.js-legacy", () => ({
 		this.drawRect = vi.fn().mockReturnThis();
 		this.drawCircle = vi.fn().mockReturnThis();
 		this.drawEllipse = vi.fn().mockReturnThis();
+		this.drawShape = vi.fn().mockReturnThis();
 		this.moveTo = vi.fn().mockReturnThis();
 		this.lineTo = vi.fn().mockReturnThis();
 		this.closePath = vi.fn().mockReturnThis();
@@ -32,6 +33,18 @@ vi.mock("pixi.js-legacy", () => ({
 		this.position = { set: vi.fn() };
 		this.interactive = false;
 		this.cursor = "";
+	}),
+	Sprite: vi.fn().mockImplementation(function (this: any) {
+		this.on = vi.fn().mockReturnThis();
+		this.position = { set: vi.fn() };
+		this.anchor = { set: vi.fn() };
+		this.interactive = false;
+		this.cursor = "";
+	}),
+	Texture: vi.fn().mockImplementation(function (this: any) {}),
+	BaseTexture: { from: vi.fn().mockReturnValue({}) },
+	Ellipse: vi.fn().mockImplementation(function (this: any, x: number, y: number, w: number, h: number) {
+		this.x = x; this.y = y; this.width = w; this.height = h;
 	}),
 }));
 
@@ -116,6 +129,22 @@ describe("populateScene", () => {
 });
 
 describe("createExampleScene", () => {
+	// jsdom не реализует getContext('2d') — мокаем чтобы createCanvasSprite не падал
+	const mockCtx2d = {
+		fillStyle: "",
+		font: "",
+		textAlign: "",
+		textBaseline: "",
+		fillRect: vi.fn(),
+		beginPath: vi.fn(),
+		roundRect: vi.fn(),
+		fill: vi.fn(),
+		fillText: vi.fn(),
+	};
+	beforeEach(() => {
+		vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(mockCtx2d as any);
+	});
+
 	const makeContainer = () =>
 		({
 			removeChildren: vi.fn(),
@@ -129,13 +158,25 @@ describe("createExampleScene", () => {
 		expect(vi.mocked(container.removeChildren)).toHaveBeenCalledOnce();
 	});
 
-	it("добавляет subContainer, g1 и g2 в контейнер (3 потомка)", () => {
+	it("добавляет subContainer, g1, g2 и sprite в контейнер (4 потомка)", () => {
 		const container = makeContainer();
 		createExampleScene(container);
-		// addChild вызывается один раз с тремя аргументами: subContainer, g1, g2
+		// addChild вызывается один раз с 4 аргументами: subContainer, g1, g2, sprite
 		expect(vi.mocked(container.addChild)).toHaveBeenCalledOnce();
 		const args = vi.mocked(container.addChild).mock.calls[0];
-		expect(args).toHaveLength(3);
+		expect(args).toHaveLength(4);
+	});
+
+	it("g1 использует drawShape для рисования эллипса", () => {
+		const container = makeContainer();
+		createExampleScene(container);
+		const MockGraphics = vi.mocked(PIXI.Graphics);
+		const shapes = MockGraphics.mock.results.map((r) => r.value);
+		const drawShapeCalls = shapes.flatMap((s) => s.drawShape?.mock?.calls ?? []);
+		expect(drawShapeCalls.length).toBeGreaterThanOrEqual(1);
+		// Первый аргумент — экземпляр PIXI.Ellipse
+		const MockEllipse = vi.mocked(PIXI.Ellipse);
+		expect(MockEllipse).toHaveBeenCalled();
 	});
 
 	it("g1 и g2 имеют interactive=true", () => {

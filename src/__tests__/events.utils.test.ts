@@ -8,11 +8,17 @@ vi.mock("pixi.js-legacy", () => {
 		worldAlpha = 1;
 		children: unknown[] = [];
 	}
-	return { Container };
+	class Point {
+		constructor(public x: number, public y: number) {}
+	}
+	return { Container, Point };
 });
 
 function makeCanvas(rectOffset = { left: 0, top: 0 }) {
 	const canvas = document.createElement("canvas");
+	// Размеры canvas = размеры rect → scaleX/scaleY = 1, координаты не меняются
+	canvas.width = 400;
+	canvas.height = 300;
 	vi.spyOn(canvas, "getBoundingClientRect").mockReturnValue({
 		left: rectOffset.left,
 		top: rectOffset.top,

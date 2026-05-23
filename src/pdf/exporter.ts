@@ -88,10 +88,10 @@ function buildPathInCtx(ctx: Context2d, shape: PIXI.IShape): void {
 	} else if (shape instanceof PIXI.Circle) {
 		ctx.arc(shape.x, shape.y, shape.radius, 0, Math.PI * 2, false);
 	} else if (shape instanceof PIXI.Ellipse) {
-		// Имитируем эллипс через scale + arc единичного круга
+		// PIXI.Ellipse.width/height — полуоси; имитируем через scale + arc единичного круга
 		ctx.save();
 		ctx.translate(shape.x, shape.y);
-		ctx.scale(shape.width / 2, shape.height / 2);
+		ctx.scale(shape.width, shape.height);
 		ctx.arc(0, 0, 1, 0, Math.PI * 2, false);
 		ctx.restore();
 	} else if (shape instanceof PIXI.Polygon) {
@@ -101,7 +101,10 @@ function buildPathInCtx(ctx: Context2d, shape: PIXI.IShape): void {
 		for (let i = 2; i < pts.length; i += 2) {
 			ctx.lineTo(pts[i], pts[i + 1]);
 		}
-		ctx.closePath();
+		// closeStroke=false — открытый путь (lineTo без closePath), не закрываем
+		if (shape.closeStroke !== false) {
+			ctx.closePath();
+		}
 	}
 }
 
@@ -117,7 +120,9 @@ function renderSpriteToCtx(ctx: Context2d, obj: PIXI.Sprite): void {
 	tmpCtx.drawImage(source as CanvasImageSource, 0, 0);
 	const dataUrl = tmp.toDataURL("image/png");
 
-	ctx.drawImage(dataUrl, 0, 0, obj.texture.width, obj.texture.height);
+	const dx = -obj.anchor.x * obj.texture.orig.width;
+	const dy = -obj.anchor.y * obj.texture.orig.height;
+	ctx.drawImage(dataUrl, dx, dy, obj.texture.orig.width, obj.texture.orig.height);
 }
 
 function hexToRgba(hex: number, alpha: number): string {
