@@ -1,8 +1,6 @@
 import * as PIXI from "pixi.js-legacy";
 import type { Scene } from "../types";
 
-export type { Scene };
-
 export function createPixiApp(canvas: HTMLCanvasElement): Scene {
 	const app = new PIXI.Application({
 		width: canvas.width,
